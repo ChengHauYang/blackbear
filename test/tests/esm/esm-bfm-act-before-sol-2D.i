@@ -244,7 +244,7 @@
   nl_max_its = 100
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
-  dt = 1
+  dt = 2
   end_time = 1000
 []
 
