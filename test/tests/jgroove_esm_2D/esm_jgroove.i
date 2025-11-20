@@ -155,6 +155,26 @@ T0 = 300
     b = 2
     outputs = exodus
   []
+
+  # Base on paper: Comparison of Welding Residual Stress Solutions
+  # for Control Rod Drive Mechanism Nozzles
+  # isotropic hardening was assumed
+  [isoplasticity]
+    type = ADIsotropicPlasticityStressUpdate
+    yield_stress = 235
+    hardening_function = isohard
+    max_inelastic_increment = 0.0001
+    relative_tolerance = 1e-08
+    absolute_tolerance = 1e-11
+  []
+[]
+
+[Functions]
+  [isohard]
+    type = PiecewiseLinear
+    x = '0 0.002 0.01 10000'
+    y = '235 240 480 480'
+  []
 []
 
 [Kernels]
