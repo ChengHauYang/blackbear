@@ -113,6 +113,8 @@ public:
   /// Get the normal component of the distance between the given point \p p and the path's current position
   Real normalDistance(const Point & p) const;
 
+  virtual bool passFinalTime() const = 0;
+
 protected:
   /// Verbose?
   const bool _verbose;

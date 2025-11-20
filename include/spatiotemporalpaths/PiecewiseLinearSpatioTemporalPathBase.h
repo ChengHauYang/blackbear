@@ -43,6 +43,9 @@ public:
   /// Get the coordinates for all vertices
   const std::vector<Point> & coords() { return _coords; }
 
+  /// Check if the current time has passed the final time
+  bool passFinalTime() const override;
+
 protected:
   /// Set coordinates from components
   virtual void

@@ -168,3 +168,9 @@ PiecewiseLinearSpatioTemporalPathBase::getIntervalIndices(Real t) const
              t,
              ". Try increasing 'time_tolerance' to account for floating-point error.");
 }
+
+bool
+PiecewiseLinearSpatioTemporalPathBase::passFinalTime() const
+{
+  return _t > _times.back() + _t_tol;
+}
