@@ -2,6 +2,8 @@ all_blocks = 'tube head clad butter new weldpass01 weldpass02 weldpass03 weldpas
 
 active_blocks = 'tube head clad butter new'
 
+T0 = 300
+
 [GlobalParams]
   block = ${active_blocks}
   displacements = 'disp_x disp_y'
@@ -30,6 +32,7 @@ active_blocks = 'tube head clad butter new'
 [Variables]
   [T]
     order = FIRST
+    initial_condition = ${T0}
   []
 []
 
@@ -53,25 +56,6 @@ active_blocks = 'tube head clad butter new'
     execute_on = 'TIMESTEP_BEGIN'
   []
 []
-
-# [MeshModifiers]
-#   [esm]
-#     type = SpatioTemporalPathElementSubdomainModifier
-#     path = 'path'
-#     radius = 0.03
-#     target_subdomain = '0'
-#     block = '0 1'
-#     execute_on = 'TIMESTEP_BEGIN'
-
-#     # --- new for setting IC --- #
-#
-# old_subdomain_reinitialized = false
-# reinitialize_subdomain_ids = '1'
-#     ic_strategy = "IC_POLYNOMIAL"
-
-#     nodal_patch_recovery_uo = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
-#   []
-# []
 
 [MeshModifiers]
   [cut_esm]
@@ -110,7 +94,11 @@ active_blocks = 'tube head clad butter new'
         add_variables = true
         strain = FINITE
         automatic_eigenstrain_names = true
-        generate_output = 'vonmises_stress'
+        use_automatic_differentiation = true
+
+        generate_output = "stress_xx stress_yy stress_zz
+                           stress_xy stress_xz stress_yz
+                           vonmises_stress"
       []
     []
   []
@@ -118,29 +106,44 @@ active_blocks = 'tube head clad butter new'
 
 [Materials]
   [thermal]
-    type = HeatConductionMaterial
+    type = ADHeatConductionMaterial
     thermal_conductivity = 45.0
     specific_heat = 0.5
   []
+  # [specific_heat]
+  #   type = ADPiecewiseLinearInterpolationMaterial
+  #   property = 'specific_heat'
+  #   variable = T
+  #   x = '-1000 3000'
+  #   y = '550 550'
+  # []
+  # [thermalconductivity]
+  #   type = ADPiecewiseLinearInterpolationMaterial
+  #   property = 'thermal_conductivity'
+  #   variable = T
+  #   x = '-1000 298.15 373.15 473.15 573.15 673.15 773.15 873.15 973.15 1023.15 2500 3000'
+  #   y = '14.1e-3 14.1e-3 15.4e-3 16.8e-3 18.3e-3 19.7e-3 21.2e-3 22.4e-3 23.9e-3 24.6e-3 24.6e-3 24.6e-3' ##W/mm-K
+  # []
+
   [density]
-    type = GenericConstantMaterial
+    type = ADGenericConstantMaterial
     prop_names = 'density'
     prop_values = 8000.0
   []
   [elasticity]
-    type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 1e9
+    type = ADComputeIsotropicElasticityTensor
+    youngs_modulus = 1e3
     poissons_ratio = 0.0
   []
-  # [expansion1]
-  #   type = ComputeThermalExpansionEigenstrain
-  #   temperature = T
-  #   thermal_expansion_coeff = 1e-7
-  #   stress_free_temperature = 0
-  #   eigenstrain_name = thermal_expansion
-  # []
+  [expansion1]
+    type = ADComputeThermalExpansionEigenstrain
+    temperature = T
+    thermal_expansion_coeff = 1e-3
+    stress_free_temperature = ${T0}
+    eigenstrain_name = thermal_expansion
+  []
   [stress]
-    type = ComputeFiniteStrainElasticStress
+    type = ADComputeFiniteStrainElasticStress
   []
   [volumetric_heat] # need to be exactly this name!
     type = ADMovingEllipsoidalHeatSource
@@ -156,11 +159,11 @@ active_blocks = 'tube head clad butter new'
 
 [Kernels]
   [heat_conduction]
-    type = HeatConduction
+    type = ADHeatConduction
     variable = T
   []
   [time_derivative]
-    type = HeatConductionTimeDerivative
+    type = ADHeatConductionTimeDerivative
     variable = T
   []
   [hsource]
@@ -175,44 +178,28 @@ active_blocks = 'tube head clad butter new'
     type = DirichletBC
     variable = T
     boundary = tube_id
-    value = 0
+    value = ${T0}
   []
 
   [right]
     type = DirichletBC
     variable = T
     boundary = vessel_od
-    value = 0
+    value = ${T0}
   []
 
-  # [top]
-  #   type = DirichletBC
-  #   variable = T
-  #   boundary = top
-  #   value = 0
-  # []
-
-  # [bottom]
-  #   type = DirichletBC
-  #   variable = T
-  #   boundary = bottom
-  #   value = 0
-  # []
-
-  # [anchor_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   boundary = 'left right top bottom'
-  #   #boundary = 'left'
-  #   value = 0.0
-  # []
-  # [anchor_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   boundary = 'left right top bottom'
-  #   #boundary =  'bottom'
-  #   value = 0.0
-  # []
+  [anchor_x]
+    type = DirichletBC
+    variable = disp_x
+    boundary = 'tube_id'
+    value = 0.0
+  []
+  [anchor_y]
+    type = DirichletBC
+    variable = disp_y
+    boundary = 'tube_id'
+    value = 0.0
+  []
 []
 
 [Executioner]
