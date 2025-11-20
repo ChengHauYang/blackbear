@@ -118,7 +118,8 @@ npr_order = FIRST
     times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24'
     blocks_from = 'pass-1 pass-2 pass-3 pass-4 pass-5 pass-6 pass-7 pass-8 pass-9 pass-10 pass-11 pass-12 pass-13 pass-14 pass-15 pass-16 pass-17 pass-18 pass-19 pass-20 pass-21 pass-22 pass-23 pass-24' # this is block "1" but block ID = "2"
     blocks_to = 'new new new new new new new new new new new new new new new new new new new new new new new new'
-    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    # execute_on = 'INITIAL TIMESTEP_BEGIN'
+    execute_on = 'TIMESTEP_END '
 
     block = ${all_blocks}
 
