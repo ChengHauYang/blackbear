@@ -42,3 +42,9 @@ FunctionSpatioTemporalPath::position(Real t) const
 {
   return Point(_x ? _x->value(t) : 0.0, _y ? _y->value(t) : 0.0, _z ? _z->value(t) : 0.0);
 }
+
+bool
+FunctionSpatioTemporalPath::passFinalTime() const
+{
+  return false;
+}

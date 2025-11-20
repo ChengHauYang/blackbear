@@ -51,5 +51,5 @@ ADMovingHeatSource::computeQpProperties()
 {
   _tangential_distance[_qp] = _path.tangentialDistance(_q_point[_qp]);
   _normal_distance[_qp] = _path.normalDistance(_q_point[_qp]);
-  _volumetric_heat[_qp] = computeHeatSource();
+  _volumetric_heat[_qp] = _path.passFinalTime() ? 0.0 : computeHeatSource();
 }

@@ -30,6 +30,8 @@ public:
 
   virtual Point position(Real t) const override;
 
+  virtual bool passFinalTime() const override;
+
 protected:
   /// The function for the x-coordinate
   const Function * _x;
