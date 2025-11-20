@@ -2,7 +2,9 @@ all_blocks = 'tube head clad butter new weldpass01 weldpass02 weldpass03 weldpas
 
 active_blocks = 'tube head clad butter new'
 
-T0 = 300
+# Preheat temperature 60 F from paper
+# change it to be "k"
+T0 = 288.7
 
 [GlobalParams]
   block = ${active_blocks}
@@ -20,10 +22,20 @@ T0 = 300
     file = "jgroove_model01.exo"
   []
 
+  [ext]
+    type = SideSetsAroundSubdomainGenerator
+    include_only_external_sides = true # not consider internal
+    input = 'gmg'
+    block = 'tube head clad butter'
+    new_boundary = 'moving_boundary'
+  []
+
   coord_type = 'RZ'
 
   add_subdomain_ids = '26'
   add_subdomain_names = 'new'
+
+  add_sideset_names = 'tube_weld butter_weld'
 
   rz_coord_axis = y
   use_displaced_mesh = false
@@ -61,7 +73,7 @@ T0 = 300
   [cut_esm]
     type = TimedSubdomainModifier
     times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14'
-    blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
+    blocks_from = 'weldpass13 weldpass14 weldpass11 weldpass12 weldpass09 weldpass10 weldpass07 weldpass08 weldpass05 weldpass06 weldpass03 weldpass04 weldpass01 weldpass02'
     blocks_to = 'new new new new new new new new new new new new new new'
     execute_on = 'INITIAL TIMESTEP_BEGIN'
 
@@ -74,6 +86,34 @@ T0 = 300
     reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
     reinitialize_variables = "T disp_x disp_y"
     polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
+
+    #
+    moving_boundaries = 'moving_boundary'
+    moving_boundary_subdomain_pairs = 'new weldpass02; new weldpass03; new weldpass04; new weldpass05; new weldpass06; new weldpass07; new weldpass08; new weldpass09; new weldpass10; new weldpass11; new weldpass12; new weldpass13; new weldpass14; new'
+    # moving_boundary_subdomain_pairs = 'tube head;tube butter ; butter head;head clad; tube weldpass01; tube weldpass03; tube weldpass05;tube weldpass07; tube weldpass09;  tube weldpass11; tube weldpass13; butter weldpass02; butter weldpass04; butter weldpass06; butter weldpass08; butter weldpass10; butter weldpass12; butter weldpass14'
+  []
+[]
+
+[UserObjects]
+  [tube_weld_update]
+    type = SidesetAroundSubdomainUpdater
+    inner_subdomains = tube
+    outer_subdomains = 'weldpass01 weldpass03 weldpass05 weldpass07 weldpass09 weldpass11 weldpass13'
+    assign_outer_surface_sides = false
+    update_sideset_name = tube_weld
+    execute_on = 'INITIAL TIMESTEP_BEGIN TIMESTEP_END'
+    execution_order_group = -1
+    block = ${all_blocks}
+  []
+  [butter_weld_update]
+    type = SidesetAroundSubdomainUpdater
+    inner_subdomains = butter
+    outer_subdomains = 'weldpass01 weldpass02 weldpass04 weldpass06 weldpass08 weldpass10 weldpass12 weldpass14'
+    assign_outer_surface_sides = false
+    update_sideset_name = butter_weld
+    execute_on = 'INITIAL TIMESTEP_BEGIN TIMESTEP_END'
+    execution_order_group = -1
+    block = ${all_blocks}
   []
 []
 
@@ -95,6 +135,8 @@ T0 = 300
         strain = FINITE
         automatic_eigenstrain_names = true
         use_automatic_differentiation = true
+        eigenstrain_names = 'thermal'
+        temperature = T
 
         generate_output = "stress_xx stress_yy stress_zz
                            stress_xy stress_xz stress_yz
@@ -105,56 +147,95 @@ T0 = 300
 []
 
 [Materials]
-  [thermal]
-    type = ADHeatConductionMaterial
-    thermal_conductivity = 45.0
-    specific_heat = 0.5
+  # begin: specific heat
+  # easy tests
+  # [thermal]
+  #   type = ADHeatConductionMaterial
+  #   thermal_conductivity = 45.0
+  #   specific_heat = 0.5
+  # []
+  # copy from Bipul
+  [specific_heat]
+    type = ADPiecewiseLinearInterpolationMaterial
+    property = 'specific_heat'
+    variable = T
+    x = '-1000 3000'
+    y = '550 550'
   []
-  # [specific_heat]
-  #   type = ADPiecewiseLinearInterpolationMaterial
-  #   property = 'specific_heat'
-  #   variable = T
-  #   x = '-1000 3000'
-  #   y = '550 550'
-  # []
-  # [thermalconductivity]
-  #   type = ADPiecewiseLinearInterpolationMaterial
-  #   property = 'thermal_conductivity'
-  #   variable = T
-  #   x = '-1000 298.15 373.15 473.15 573.15 673.15 773.15 873.15 973.15 1023.15 2500 3000'
-  #   y = '14.1e-3 14.1e-3 15.4e-3 16.8e-3 18.3e-3 19.7e-3 21.2e-3 22.4e-3 23.9e-3 24.6e-3 24.6e-3 24.6e-3' ##W/mm-K
-  # []
+
+  [thermalconductivity]
+    type = ADPiecewiseLinearInterpolationMaterial
+    property = 'thermal_conductivity'
+    variable = T
+    x = '-1000 298.15 373.15 473.15 573.15 673.15 773.15 873.15 973.15 1023.15 2500 3000'
+    y = '14.1e-3 14.1e-3 15.4e-3 16.8e-3 18.3e-3 19.7e-3 21.2e-3 22.4e-3 23.9e-3 24.6e-3 24.6e-3 24.6e-3' ##W/mm-K
+  []
+  # end: specific heat
 
   [density]
     type = ADGenericConstantMaterial
     prop_names = 'density'
-    prop_values = 8000.0
+    # density values from AI
+    prop_values = 8e-6 # kg/mm^3
   []
+
   [elasticity]
     type = ADComputeIsotropicElasticityTensor
-    youngs_modulus = 1e3
-    poissons_ratio = 0.0
+    youngs_modulus = 203165 # MPa == N/mm^2
+    poissons_ratio = 0.32
   []
-  [expansion1]
-    type = ADComputeThermalExpansionEigenstrain
-    temperature = T
-    thermal_expansion_coeff = 1e-3
+
+  # begin: expansion
+  # easy tests
+  # [expansion1]
+  #   type = ADComputeThermalExpansionEigenstrain
+  #   temperature = T
+  #   thermal_expansion_coeff = 1e-3
+  #   stress_free_temperature = ${T0}
+  #   eigenstrain_name = thermal_expansion
+  # []
+  # copy from Bipul
+  [CTE]
+    type = ADComputeInstantaneousThermalExpansionFunctionEigenstrain
+    eigenstrain_name = thermal
     stress_free_temperature = ${T0}
-    eigenstrain_name = thermal_expansion
+    thermal_expansion_function = CTE_base
+    temperature = T
+    outputs = exodus
   []
+  # end: expansion
+
   [stress]
     type = ADComputeFiniteStrainElasticStress
   []
-  [volumetric_heat] # need to be exactly this name!
-    type = ADMovingEllipsoidalHeatSource
-    path = 'path'
-    power = 1000
-    efficiency = 1
-    scale = 1
-    a = 6
-    b = 2
-    outputs = exodus
+
+  # begin: heat source material
+  # how to set this properly??
+  # [volumetric_heat] # need to be exactly this name!
+  #   type = ADMovingEllipsoidalHeatSource
+  #   path = 'path'
+  #   power = 1000
+  #   efficiency = 1
+  #   scale = 1
+  #   a = 6
+  #   b = 2
+  #   outputs = exodus
+  # []
+  [volumetric_heat]
+    type = FunctionPathEllipsoidHeatSourceWeave
+    # average values from other paper
+    # unit is "mm"
+    rx = 4.125
+    ry = 4.125
+    rz = 4.125
+    power = 409.3046 # J/s # average values from other paper
+    efficiency = 0.79 # average values from other paper
+    function_x = "radial_centroid"
+    function_y = "axis_centroid"
+    function_z = "z_centroid"
+    t_final = 14 # 14 weld passes
   []
+  # end: heat source material
 
   # Base on paper: Comparison of Welding Residual Stress Solutions
   # for Control Rod Drive Mechanism Nozzles
@@ -170,11 +251,36 @@ T0 = 300
 []
 
 [Functions]
+  [CTE_base]
+    type = PiecewiseLinear
+    x = '-1000 298.15 323.15 373.15 423.15 473.15 523.15 573.15 623.15 673.15 723.15 773.15 823.15 873.15 923.15 973.15 1023.15 1523.15 1673.15 10000'
+    y = '14.3033525e-6 14.3033525e-6 14.6621025e-6 15.3796025e-6 16.0971025e-6 16.8146025e-6 17.5321025e-6 18.2496025e-6 18.9671025e-6 19.6846025e-6 20.4021025e-6 21.1196025e-6 21.8371025e-6 22.5546025e-6 23.2721025e-6 23.9896025e-6 24.7071025e-6 31.8821025e-6 0 0'
+  []
   [isohard]
     type = PiecewiseLinear
     x = '0 0.002 0.01 10000'
     y = '235 240 480 480'
   []
+
+  # begin: for path
+
+  [axis_centroid] # y
+    type = PiecewiseLinear
+    x = '1  2  3   4   5   6   7   8   9   10  11  12  13  14'
+    y = '51.260924 51.260924 57.126681 57.126681 62.990355 62.990355 68.850873 68.850873 74.706266 74.706266 80.552511 80.552511 86.379865 86.379865'
+  []
+
+  [radial_centroid] # x
+    type = PiecewiseLinear
+    x = '1  2  3   4   5   6   7   8   9   10  11  12  13  14'
+    y = '56.808576 68.825729 56.128685 66.786055 55.449035 64.747105 54.769751 62.709253 54.091061 60.673183 53.413431 58.640294 52.737991 56.613974'
+  []
+
+  [z_centroid]
+    type = ConstantFunction
+    value = 0.0
+  []
+  # end: for path
 []
 
 [Kernels]
@@ -194,6 +300,23 @@ T0 = 300
 []
 
 [BCs]
+
+  [convective_surface] # Convective Start
+    type = ConvectiveFluxBC # Convective flux, e.g. q'' = h*(Tw - Tf)
+    variable = T
+    rate = 0.00001 # I copied it from Bipul # h = convective heat transfer coefficient (w/mm^2-K)
+    initial = ${T0} # initial ambient temperature (K)
+    boundary = 'tube_weld butter_weld moving_boundary' # BC applied on every interfaces
+  [] # Convective End
+
+  # [conv]
+  #   type = ADConvectiveHeatFluxBC
+  #   variable = T
+  #   boundary = 'tube_weld butter_weld moving_boundary'
+  #   T_infinity = ${T0}
+  #   heat_transfer_coefficient = ${heat_transfer_coefficient}
+  # []
+
   [left]
     type = DirichletBC
     variable = T
@@ -231,9 +354,11 @@ T0 = 300
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
   dt = 0.1
-  end_time = 20
+  end_time = 15
+  automatic_scaling = true
 []
 
 [Outputs]
   exodus = true
+  time_step_interval = 2
 []
