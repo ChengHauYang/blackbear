@@ -4,7 +4,8 @@ active_blocks = 'tube head clad butter new'
 
 # Preheat temperature 60 F from paper
 # change it to be "k"
-T0 = 288.7
+# 20 C to k
+T0 = 293.15
 
 [GlobalParams]
   block = ${active_blocks}
@@ -81,7 +82,7 @@ T0 = 288.7
   [cut_esm]
     type = TimedSubdomainModifier
     times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14'
-    blocks_from = 'weldpass13 weldpass14 weldpass11 weldpass12 weldpass09 weldpass10 weldpass07 weldpass08 weldpass05 weldpass06 weldpass03 weldpass04 weldpass01 weldpass02'
+    blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
     blocks_to = 'new new new new new new new new new new new new new new'
     execute_on = 'INITIAL TIMESTEP_BEGIN'
 
@@ -213,7 +214,7 @@ T0 = 288.7
 
   [density]
     type = ADGenericConstantMaterial
-    prop_names = 'density
+    prop_names = 'density'
     # from INCONEL alloy 600
     prop_values = 8.47e-6 # kg/mm^3
   []
@@ -221,13 +222,12 @@ T0 = 288.7
   # Adjusted based on Table 4 (INCONEL alloy 600) AND Emc2 Paper Key Point (315C)
   [youngs_modulus_func]
     type = ADPiecewiseLinearInterpolationMaterial
-    # Temperature in Kelvin (K)
-    # 22C -> 295.15, 300C -> 573.15, [KEY] 315C -> 588.15, 400C -> 673.15 ...
+
     x = '-1000    295.15   373.15   473.15   573.15   588.15     673.15   773.15   873.15   973.15   1073.15  1173.15  1273.15  3000'
 
     # Young's Modulus in MPa (N/mm^2)
     # [KEY POINT] 315C -> 203165 (From Emc2 Paper)
-    y = '214000.0 214000.0 210000.0 205000.0 199000.0 203165.0   193000.0 187000.0 180000.0 172000.0 164000.0 154000.0 143000.0 10000.0'
+    y = '214000.0 214000.0 210000.0 205000.0 199000.0 203165.0 193000.0 187000.0 180000.0 172000.0 164000.0 154000.0 143000.0 10000.0'
 
     property = youngs_modulus_prop
     variable = T
@@ -354,13 +354,13 @@ T0 = 288.7
   [axis_centroid] # y
     type = PiecewiseLinear
     x = '1  2  3   4   5   6   7   8   9   10  11  12  13  14'
-    y = '51.260924 51.260924 57.126681 57.126681 62.990355 62.990355 68.850873 68.850873 74.706266 74.706266 80.552511 80.552511 86.379865 86.379865'
+    y = '86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
   []
 
   [radial_centroid] # x
     type = PiecewiseLinear
     x = '1  2  3   4   5   6   7   8   9   10  11  12  13  14'
-    y = '56.808576 68.825729 56.128685 66.786055 55.449035 64.747105 54.769751 62.709253 54.091061 60.673183 53.413431 58.640294 52.737991 56.613974'
+    y = '52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
   []
 
   [z_centroid]
