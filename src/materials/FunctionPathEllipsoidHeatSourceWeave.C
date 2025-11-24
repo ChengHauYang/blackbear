@@ -45,6 +45,11 @@ FunctionPathEllipsoidHeatSourceWeave::validParams()
 
   params.addParam<Real>("t_final", 0.0, "After this time, volumetric heat is set to zero.");
 
+  params.addParam<std::vector<std::vector<Real>>>(
+      "no_heat_source_intervals",
+      {},
+      "Within the specified time intervals, no heat source is active.");
+
   params.addClassDescription("Generalized double ellipsoid heat source with weave, path, "
                              "variable radii, variable power and efficiency.");
 
@@ -85,7 +90,8 @@ FunctionPathEllipsoidHeatSourceWeave::FunctionPathEllipsoidHeatSourceWeave(
     _va_integral(isParamSetByUser("va_postprocess") ? &getPostprocessorValue("va_postprocess")
                                                     : nullptr),
 
-    _t_final(getParam<Real>("t_final"))
+    _t_final(getParam<Real>("t_final")),
+    _no_heat_source_intervals(getParam<std::vector<std::vector<Real>>>("no_heat_source_intervals"))
 {
   // validation
   if (!_function_P && _P == 0.0)
@@ -99,6 +105,15 @@ FunctionPathEllipsoidHeatSourceWeave::FunctionPathEllipsoidHeatSourceWeave(
 
   if (!_function_rz && _rz == 0.0)
     mooseError("Either heat_source_rz or rz must be provided and non-zero.");
+
+  for (const auto & interval : _no_heat_source_intervals)
+  {
+    if (interval.size() != 2)
+      mooseError("Each no_heat_source_intervals entry must have exactly two values.");
+    if (interval[0] >= interval[1])
+      mooseError(
+          "In no_heat_source_intervals, the first value must be less than the second value.");
+  }
 }
 
 void
@@ -109,6 +124,13 @@ FunctionPathEllipsoidHeatSourceWeave::computeQpProperties()
     _volumetric_heat[_qp] = 0.0;
     return;
   }
+
+  for (const auto & interval : _no_heat_source_intervals)
+    if (_t > interval[0] && _t < interval[1])
+    {
+      _volumetric_heat[_qp] = 0.0;
+      return;
+    }
 
   const Real & x = _q_point[_qp](0);
   const Real & y = _q_point[_qp](1);

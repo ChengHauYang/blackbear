@@ -84,7 +84,7 @@ T0 = 293.15
     times = '1 2 3 4 5 6 7 8 9 10 11 12 13 14'
     blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
     blocks_to = 'new new new new new new new new new new new new new new'
-    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    execute_on = 'TIMESTEP_BEGIN'
 
     block = ${all_blocks}
 
@@ -110,7 +110,7 @@ T0 = 293.15
     outer_subdomains = 'weldpass01 weldpass03 weldpass05 weldpass07 weldpass09 weldpass11 weldpass13'
     assign_outer_surface_sides = false
     update_sideset_name = tube_weld
-    execute_on = 'INITIAL TIMESTEP_BEGIN TIMESTEP_END'
+    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
     execution_order_group = -1
     block = ${all_blocks}
   []
@@ -120,7 +120,7 @@ T0 = 293.15
     outer_subdomains = 'weldpass01 weldpass02 weldpass04 weldpass06 weldpass08 weldpass10 weldpass12 weldpass14'
     assign_outer_surface_sides = false
     update_sideset_name = butter_weld
-    execute_on = 'INITIAL TIMESTEP_BEGIN TIMESTEP_END'
+    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
     execution_order_group = -1
     block = ${all_blocks}
   []

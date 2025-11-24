@@ -27,7 +27,7 @@ T0 = 293.15
     type = SideSetsAroundSubdomainGenerator
     include_only_external_sides = true # not consider internal
     input = 'gmg'
-    block = 'tube head clad butter'
+    block = 'tube head butter clad'
     new_boundary = 'moving_boundary'
   []
 
@@ -79,9 +79,30 @@ T0 = 293.15
 []
 
 [MeshModifiers]
+  [clad_esm]
+    type = SpatioTemporalPathElementSubdomainModifier
+    path = 'path_clad'
+    radius = 3.2
+    target_subdomain = 'new'
+    execute_on = 'TIMESTEP_BEGIN'
+
+    block = 'clad new'
+
+    # --- new for setting IC --- #
+
+    old_subdomain_reinitialized = false
+    reinitialize_subdomains = 'new'
+    reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
+    reinitialize_variables = "T disp_x disp_y"
+    polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
+
+    ###
+    moving_boundaries = 'moving_boundary'
+    moving_boundary_subdomain_pairs = 'new clad; new'
+  []
   [butter_esm]
     type = SpatioTemporalPathElementSubdomainModifier
-    path = 'path'
+    path = 'path_butter'
     radius = 3.2
     target_subdomain = 'new'
     execute_on = 'TIMESTEP_BEGIN'
@@ -102,7 +123,7 @@ T0 = 293.15
   []
   [cut_esm]
     type = TimedSubdomainModifier
-    times = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
+    times = '30 31 32 33 34 35 36 37 38 39 40 41 42 43'
     blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
     blocks_to = 'new new new new new new new new new new new new new new'
     execute_on = 'TIMESTEP_BEGIN'
@@ -137,7 +158,7 @@ T0 = 293.15
   []
   [head_butter_update]
     type = SidesetAroundSubdomainUpdater
-    inner_subdomains = 'head clad'
+    inner_subdomains = 'head new'
     outer_subdomains = 'butter'
     assign_outer_surface_sides = false
     update_sideset_name = head_butter
@@ -158,10 +179,16 @@ T0 = 293.15
 []
 
 [SpatioTemporalPaths]
-  [path]
+  [path_butter]
     type = FunctionSpatioTemporalPath
-    x = path_x
-    y = path_y
+    x = path_x_butter
+    y = path_y_butter
+    verbose = true
+  []
+  [path_clad]
+    type = FunctionSpatioTemporalPath
+    x = path_x_clad
+    y = path_y_clad
     verbose = true
   []
 []
@@ -333,8 +360,8 @@ T0 = 293.15
     function_x = "whole_path_x"
     function_y = "whole_path_y"
     function_z = "z_centroid"
-    t_final = 29 # 14 weld passes
-    no_heat_source_intervals = '15 16'
+    t_final = 43
+    no_heat_source_intervals = '14 15; 29 30'
   []
   # end: heat source material
 
@@ -383,41 +410,53 @@ T0 = 293.15
     y = '235 240 480 480'
   []
 
-  [path_x]
+  [path_x_clad]
     type = PiecewiseLinear
-    x = '0 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15'
+    x = '1 14'
+    y = '81 209.3'
+  []
+
+  [path_y_clad]
+    type = PiecewiseLinear
+    x = '1 14'
+    y = '51.555 51.555'
+  []
+
+  [path_x_butter]
+    type = PiecewiseLinear
+    x = '0 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29'
     y = '-50.8 50.8 54.8 59.24 60.892793 62.545587 64.19838 65.851174 67.503967 69.156761 70.809554 72.462348 74.115141 75.767934 77.420728 79.073521'
   []
 
-  [path_y]
+  [path_y_butter]
     type = PiecewiseLinear
-    x = '0 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15'
+    x = '0 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29'
     y = '-92.645 92.645 92.645 92.645 89.002436 85.359872 81.717307 78.074743 74.432179 70.789615 67.147051 63.504487 59.861922 56.219358 52.576794 48.93423'
   []
 
   [whole_path_x]
     type = PiecewiseLinear
-    x = '1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '50.8 54.8 59.24 60.892793 62.545587 64.19838 65.851174 67.503967 69.156761 70.809554 72.462348 74.115141 75.767934 77.420728 79.073521 52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
+    x = '1 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43'
+    y = '81 209.3 50.8 54.8 59.24 60.892793 62.545587 64.19838 65.851174 67.503967 69.156761 70.809554 72.462348 74.115141 75.767934 77.420728 79.073521 52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
   []
 
   [whole_path_y]
     type = PiecewiseLinear
-    x = '1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '92.645 92.645 92.645 89.002436 85.359872 81.717307 78.074743 74.432179 70.789615 67.147051 63.504487 59.861922 56.219358 52.576794 48.93423 86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
+    x = '1 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43'
+    y = '51.555 51.555 92.645 92.645 92.645 89.002436 85.359872 81.717307 78.074743 74.432179 70.789615 67.147051 63.504487 59.861922 56.219358 52.576794 48.93423 86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
   []
 
   # begin: for path
-  [axis_centroid] # y
+  [path_x_weld] # x
     type = PiecewiseLinear
-    x = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
+    x = '30 31 32 33 34 35 36 37 38 39 40 41 42 43'
+    y = '52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
   []
 
-  [radial_centroid] # x
+  [path_y_weld] # y
     type = PiecewiseLinear
-    x = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
+    x = '30 31 32 33 34 35 36 37 38 39 40 41 42 43'
+    y = '86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
   []
 
   [z_centroid]
@@ -497,7 +536,8 @@ T0 = 293.15
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
   dt = 0.1
-  end_time = 30
+  # dt = 1
+  end_time = 45
   automatic_scaling = true
 []
 
