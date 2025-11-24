@@ -40,4 +40,6 @@ protected:
   const Real * const _va_integral;
 
   const Real _t_final;
+
+  const std::vector<std::vector<Real>> _no_heat_source_intervals;
 };
