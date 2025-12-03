@@ -1,11 +1,12 @@
-all_blocks = 'tube head clad butter new weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-
 active_blocks = 'tube head clad butter new'
 
 # Preheat temperature 60 F from paper
 # change it to be "k"
-# 20 C to k
-T0 = 293.15
+# 315 C to k (grap from Table1 in Comparison of Welding Residual Stress Solutions for Control Rod Drive Mechanism Nozzles)
+T0 = 588.15
+
+# ambient temperature
+TA = 293.15
 
 [GlobalParams]
   block = ${active_blocks}
@@ -15,20 +16,21 @@ T0 = 293.15
 [Problem]
   kernel_coverage_check = false
   material_coverage_check = false
+  restart_file_base = esm_jgroove_cp_cp/LATEST
 []
 
 [Mesh]
   [gmg]
     type = FileMeshGenerator
-    file = "jgroove_model01.exo"
+    file = esm_jgroove_cp_cp/LATEST
   []
 
   [ext]
     type = SideSetsAroundSubdomainGenerator
     include_only_external_sides = true # not consider internal
     input = 'gmg'
-    block = 'tube head clad butter'
-    new_boundary = 'moving_boundary'
+    block = ${active_blocks}
+    new_boundary = 'outer_boundary'
   []
 
   [fix_node]
@@ -40,20 +42,14 @@ T0 = 293.15
   []
 
   coord_type = 'RZ'
+  rz_coord_axis = y # axial coordinate = y, radial coordinate = x
 
-  add_subdomain_ids = '26'
-  add_subdomain_names = 'new'
-
-  add_sideset_names = 'tube_weld head_butter new_weld'
-
-  rz_coord_axis = y
   use_displaced_mesh = false
 []
 
 [Variables]
   [T]
     order = FIRST
-    initial_condition = ${T0}
   []
 []
 
@@ -78,94 +74,6 @@ T0 = 293.15
   []
 []
 
-[MeshModifiers]
-  [butter_esm]
-    type = SpatioTemporalPathElementSubdomainModifier
-    path = 'path'
-    radius = 3.2
-    target_subdomain = 'new'
-    execute_on = 'TIMESTEP_BEGIN'
-
-    block = 'butter new'
-
-    # --- new for setting IC --- #
-
-    old_subdomain_reinitialized = false
-    reinitialize_subdomains = 'new'
-    reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
-    reinitialize_variables = "T disp_x disp_y"
-    polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
-
-    ###
-    moving_boundaries = 'moving_boundary'
-    moving_boundary_subdomain_pairs = 'new butter; new; butter weldpass01; butter weldpass02; butter weldpass03; butter weldpass04; butter weldpass05; butter weldpass06; butter weldpass07; butter weldpass08; butter weldpass09; butter weldpass10; butter weldpass11; butter weldpass12; butter weldpass13; butter weldpass14'
-  []
-  [cut_esm]
-    type = TimedSubdomainModifier
-    times = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-    blocks_to = 'new new new new new new new new new new new new new new'
-    execute_on = 'TIMESTEP_BEGIN'
-
-    block = ${all_blocks}
-
-    # --- new for setting IC --- #
-
-    old_subdomain_reinitialized = false
-    reinitialize_subdomains = ${active_blocks}
-    reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
-    reinitialize_variables = "T disp_x disp_y"
-    polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
-
-    #
-    moving_boundaries = 'moving_boundary'
-    moving_boundary_subdomain_pairs = 'new weldpass02; new weldpass03; new weldpass04; new weldpass05; new weldpass06; new weldpass07; new weldpass08; new weldpass09; new weldpass10; new weldpass11; new weldpass12; new weldpass13; new weldpass14; new'
-    # moving_boundary_subdomain_pairs = 'tube head;tube butter ; butter head;head clad; tube weldpass01; tube weldpass03; tube weldpass05;tube weldpass07; tube weldpass09;  tube weldpass11; tube weldpass13; butter weldpass02; butter weldpass04; butter weldpass06; butter weldpass08; butter weldpass10; butter weldpass12; butter weldpass14'
-  []
-[]
-
-[UserObjects]
-  [tube_weld_update]
-    type = SidesetAroundSubdomainUpdater
-    inner_subdomains = tube
-    outer_subdomains = 'weldpass01 weldpass03 weldpass05 weldpass07 weldpass09 weldpass11 weldpass13 butter'
-    assign_outer_surface_sides = false
-    update_sideset_name = tube_weld
-    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
-    execution_order_group = -1
-    block = ${all_blocks}
-  []
-  [head_butter_update]
-    type = SidesetAroundSubdomainUpdater
-    inner_subdomains = 'head clad'
-    outer_subdomains = 'butter'
-    assign_outer_surface_sides = false
-    update_sideset_name = head_butter
-    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
-    execution_order_group = -1
-    block = ${all_blocks}
-  []
-  [new_weld_update]
-    type = SidesetAroundSubdomainUpdater
-    inner_subdomains = new
-    outer_subdomains = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-    assign_outer_surface_sides = false
-    update_sideset_name = new_weld
-    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
-    execution_order_group = -1
-    block = ${all_blocks}
-  []
-[]
-
-[SpatioTemporalPaths]
-  [path]
-    type = FunctionSpatioTemporalPath
-    x = path_x
-    y = path_y
-    verbose = true
-  []
-[]
-
 [Physics]
 
   [SolidMechanics]
@@ -173,15 +81,25 @@ T0 = 293.15
     [QuasiStatic]
       [all]
         add_variables = true
-        strain = FINITE
+        strain = SMALL
+        incremental = true
         automatic_eigenstrain_names = true
         use_automatic_differentiation = true
         eigenstrain_names = 'thermal'
         temperature = T
 
+        # generate_output = "stress_xx stress_yy stress_zz
+        #                    stress_xy stress_xz stress_yz
+        #                    vonmises_stress"
         generate_output = "stress_xx stress_yy stress_zz
                            stress_xy stress_xz stress_yz
-                           vonmises_stress"
+                           vonmises_stress
+                           mechanical_strain_xx mechanical_strain_yy mechanical_strain_zz
+                           mechanical_strain_xy mechanical_strain_xz mechanical_strain_yz
+                           max_principal_stress mid_principal_stress min_principal_stress
+                           plastic_strain_xx plastic_strain_yy plastic_strain_zz
+                           plastic_strain_xy plastic_strain_xz plastic_strain_yz"
+
       []
     []
   []
@@ -209,6 +127,52 @@ T0 = 293.15
   #   variable = T
   #   x = '-1000 298.15 373.15 473.15 573.15 673.15 773.15 873.15 973.15 1023.15 2500 3000'
   #   y = '14.1e-3 14.1e-3 15.4e-3 16.8e-3 18.3e-3 19.7e-3 21.2e-3 22.4e-3 23.9e-3 24.6e-3 24.6e-3 24.6e-3' ##W/mm-K
+  # []
+
+  # do not have lots of creep effects so we neglect that
+  [radial_return_stress_load_alloy600]
+    type = ADComputeMultipleInelasticStress
+    inelastic_models = 'isoplasticity_alloy600'
+    max_iterations = 1000 #default = 50
+    relative_tolerance = 1e-08 #default = 1e-05
+    absolute_tolerance = 1e-11 # dfault = 1e-05
+    perform_finite_strain_rotations = false
+    block = 'tube'
+  []
+
+  [radial_return_stress_load_sa508]
+    type = ADComputeMultipleInelasticStress
+    inelastic_models = 'isoplasticity_sa508'
+    max_iterations = 1000 #default = 50
+    relative_tolerance = 1e-08 #default = 1e-05
+    absolute_tolerance = 1e-11 # dfault = 1e-05
+    perform_finite_strain_rotations = false
+    block = 'head'
+  []
+
+  [radial_return_stress_load_alloy182]
+    type = ADComputeMultipleInelasticStress
+    inelastic_models = 'isoplasticity_alloy182'
+    max_iterations = 1000 #default = 50
+    relative_tolerance = 1e-08 #default = 1e-05
+    absolute_tolerance = 1e-11 # dfault = 1e-05
+    perform_finite_strain_rotations = false
+    block = 'butter new'
+  []
+
+  [radial_return_stress_load_ss309]
+    type = ADComputeMultipleInelasticStress
+    inelastic_models = 'isoplasticity_ss309'
+    max_iterations = 1000 #default = 50
+    relative_tolerance = 1e-08 #default = 1e-05
+    absolute_tolerance = 1e-11 # dfault = 1e-05
+    perform_finite_strain_rotations = false
+    block = 'clad'
+  []
+
+  # above "radial_return_stress_load" cannot set together with this one
+  # [stress]
+  #   type = ADComputeFiniteStrainElasticStress
   # []
 
   # Specific Heat (Based on Table 3 in INCONEL alloy 600)
@@ -279,10 +243,26 @@ T0 = 293.15
     property = poissons_ratio_prop
     variable = T
   []
-  [elasticity]
+
+  [elasticity_alloy600_alloy182]
     type = ADComputeVariableIsotropicElasticityTensor
     youngs_modulus = youngs_modulus_prop # MPa == N/mm^2
     poissons_ratio = poissons_ratio_prop
+    block = 'tube butter new'
+  []
+
+  [elasticity_sa508] # we got this at 315C
+    type = ADComputeVariableIsotropicElasticityTensor
+    youngs_modulus = 183150 # MPa == N/mm^2
+    poissons_ratio = 0.3
+    block = 'head'
+  []
+
+  [elasticity_ss309] # we got this at 315C
+    type = ADComputeVariableIsotropicElasticityTensor
+    youngs_modulus = 176290 # MPa == N/mm^2
+    poissons_ratio = 0.3
+    block = 'clad'
   []
 
   # begin: expansion
@@ -305,49 +285,45 @@ T0 = 293.15
   []
   # end: expansion
 
-  [stress]
-    type = ADComputeFiniteStrainElasticStress
-  []
-
-  # begin: heat source material
-  # how to set this properly??
-  # [volumetric_heat] # need to be exactly this name!
-  #   type = ADMovingEllipsoidalHeatSource
-  #   path = 'path'
-  #   power = 1000
-  #   efficiency = 1
-  #   scale = 1
-  #   a = 6
-  #   b = 2
-  #   outputs = exodus
-  # []
-  [volumetric_heat]
-    type = FunctionPathEllipsoidHeatSourceWeave
-    # average values from other paper
-    # unit is "mm"
-    rx = 2.075
-    ry = 2.075
-    rz = 2.075
-    power = 4193.7 # J/s # average values from other paper
-    efficiency = 0.79 # average values from other paper
-    function_x = "whole_path_x"
-    function_y = "whole_path_y"
-    function_z = "z_centroid"
-    t_final = 29 # 14 weld passes
-    no_heat_source_intervals = '15 16'
-  []
-  # end: heat source material
-
   # Base on paper: Comparison of Welding Residual Stress Solutions
   # for Control Rod Drive Mechanism Nozzles
   # isotropic hardening was assumed
-  [isoplasticity]
+  # but the values below are copied from Bipul
+  [isoplasticity_alloy600]
     type = ADIsotropicPlasticityStressUpdate
-    yield_stress = 235
-    hardening_function = isohard
+    yield_stress = 214.2
+    hardening_function = isohard_alloy600
     max_inelastic_increment = 0.0001
     relative_tolerance = 1e-08
     absolute_tolerance = 1e-11
+    block = 'tube'
+  []
+  [isoplasticity_sa508]
+    type = ADIsotropicPlasticityStressUpdate
+    yield_stress = 268.9
+    hardening_function = isohard_sa508
+    max_inelastic_increment = 0.0001
+    relative_tolerance = 1e-08
+    absolute_tolerance = 1e-11
+    block = 'head'
+  []
+  [isoplasticity_alloy182]
+    type = ADIsotropicPlasticityStressUpdate
+    yield_stress = 162.8
+    hardening_function = isohard_alloy182
+    max_inelastic_increment = 0.0001
+    relative_tolerance = 1e-08
+    absolute_tolerance = 1e-11
+    block = 'butter new'
+  []
+  [isoplasticity_ss309]
+    type = ADIsotropicPlasticityStressUpdate
+    yield_stress = 148.8
+    hardening_function = isohard_ss309
+    max_inelastic_increment = 0.0001
+    relative_tolerance = 1e-08
+    absolute_tolerance = 1e-11
+    block = 'clad'
   []
 []
 
@@ -377,46 +353,42 @@ T0 = 293.15
   []
   # thermal exapansion end
 
-  [isohard]
+  [isohard_alloy600] # find room temperature curve # different temperature data (tensor strain/ yield strain)
     type = PiecewiseLinear
-    x = '0 0.002 0.01 10000'
-    y = '235 240 480 480'
+    # x = '0 0.002 0.01 10000' # strain (do not have unit)
+    # y = '235 240 480 480' #MPa
+    x = '0 100'
+    y = '214.2 215.2' # +1 suggested by Bipul
   []
 
-  [path_x]
+  [isohard_sa508]
     type = PiecewiseLinear
-    x = '0 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15'
-    y = '-50.8 50.8 54.8 59.24 60.892793 62.545587 64.19838 65.851174 67.503967 69.156761 70.809554 72.462348 74.115141 75.767934 77.420728 79.073521'
+    x = '0 100'
+    y = '268.9 269.9'
   []
 
-  [path_y]
+  [isohard_alloy182]
     type = PiecewiseLinear
-    x = '0 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15'
-    y = '-92.645 92.645 92.645 92.645 89.002436 85.359872 81.717307 78.074743 74.432179 70.789615 67.147051 63.504487 59.861922 56.219358 52.576794 48.93423'
+    x = '0 100'
+    y = '162.8 163.8'
   []
 
-  [whole_path_x]
+  [isohard_ss309]
     type = PiecewiseLinear
-    x = '1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '50.8 54.8 59.24 60.892793 62.545587 64.19838 65.851174 67.503967 69.156761 70.809554 72.462348 74.115141 75.767934 77.420728 79.073521 52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
-  []
-
-  [whole_path_y]
-    type = PiecewiseLinear
-    x = '1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16 17 18 19 20 21 22 23 24 25 26 27 28 29'
-    y = '92.645 92.645 92.645 89.002436 85.359872 81.717307 78.074743 74.432179 70.789615 67.147051 63.504487 59.861922 56.219358 52.576794 48.93423 86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
+    x = '0 100'
+    y = '148.8 149.8'
   []
 
   # begin: for path
   [axis_centroid] # y
     type = PiecewiseLinear
-    x = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
+    x = '3 6 9 12 15 18 21 24 27 30 33 36 39 42'
     y = '86.379865 86.379865 80.552511 80.552511 74.706266 74.706266 68.850873 68.850873 62.990355 62.990355 57.126681 57.126681 51.260924 51.260924'
   []
 
   [radial_centroid] # x
     type = PiecewiseLinear
-    x = '16 17 18 19 20 21 22 23 24 25 26 27 28 29'
+    x = '3 6 9 12 15 18 21 24 27 30 33 36 39 42'
     y = '52.737991 56.613974 53.413431 58.640294 54.091061 60.673183 54.769751 62.709253 55.449035 64.747105 56.128685 66.786055 56.808576 68.825729'
   []
 
@@ -430,15 +402,13 @@ T0 = 293.15
 [Kernels]
   [heat_conduction]
     type = ADHeatConduction
+    thermal_conductivity = thermal_conductivity
     variable = T
   []
   [time_derivative]
     type = ADHeatConductionTimeDerivative
-    variable = T
-  []
-  [hsource]
-    type = ADMatHeatSource
-    material_property = 'volumetric_heat'
+    density_name = density
+    specific_heat = specific_heat
     variable = T
   []
 []
@@ -446,20 +416,12 @@ T0 = 293.15
 [BCs]
 
   [convective_surface] # Convective Start
-    type = ConvectiveFluxBC # Convective flux, e.g. q'' = h*(Tw - Tf)
+    type = ADConvectiveHeatFluxBC # Convective flux, e.g. q'' = h*(Tw - Tf)
     variable = T
-    rate = 0.00001 # I copied it from Bipul # h = convective heat transfer coefficient (w/mm^2-K)
-    initial = ${T0} # initial ambient temperature (K)
-    boundary = 'tube_weld head_butter new_weld moving_boundary' # BC applied on every interfaces
+    boundary = 'outer_boundary' # BC applied on every interfaces
+    T_infinity = ${TA} # ambient temperature (K)
+    heat_transfer_coefficient = 0.00001 # I copied it from Bipul # h = convective heat transfer coefficient (w/mm^2-K)
   [] # Convective End
-
-  # [conv]
-  #   type = ADConvectiveHeatFluxBC
-  #   variable = T
-  #   boundary = 'tube_weld butter_weld moving_boundary'
-  #   T_infinity = ${T0}
-  #   heat_transfer_coefficient = ${heat_transfer_coefficient}
-  # []
 
   # DEI settings
   # we set as 60F instead
@@ -470,7 +432,7 @@ T0 = 293.15
     type = DirichletBC
     variable = T
     boundary = vessel_od
-    value = ${T0}
+    value = ${TA}
   []
 
   [anchor_y]
@@ -496,12 +458,12 @@ T0 = 293.15
   nl_max_its = 100
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
-  dt = 0.1
-  end_time = 30
+  dt = 30
+  end_time = 1000000
   automatic_scaling = true
 []
 
 [Outputs]
   exodus = true
-  time_step_interval = 2
+  time_step_interval = 20
 []

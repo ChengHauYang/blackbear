@@ -352,10 +352,10 @@ T0 = 293.15
     type = FunctionPathEllipsoidHeatSourceWeave
     # average values from other paper
     # unit is "mm"
-    rx = 4.125
-    ry = 4.125
-    rz = 4.125
-    power = 409.3046 # J/s # average values from other paper
+    rx = 2.075
+    ry = 2.075
+    rz = 2.075
+    power = 4193.7 # J/s # average values from other paper
     efficiency = 0.79 # average values from other paper
     function_x = "whole_path_x"
     function_y = "whole_path_y"
