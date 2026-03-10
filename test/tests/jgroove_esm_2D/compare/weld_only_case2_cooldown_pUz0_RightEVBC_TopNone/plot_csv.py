@@ -28,8 +28,9 @@ plt.plot(
     linewidth=1.8
 )
 plt.plot(x, np.ones(len(x)) * 152.531, '--')
+plt.plot(x, np.ones(len(x)) * 199.854, '--')
 
-plt.legend(["DEI", "MOOSE"])
+plt.legend(["DEI", "MOOSE", "MOOSE (w/ EVBC)"])
 
 
 plt.xlabel(r"\text{Normalized hoop-direction distance}")
@@ -58,7 +59,9 @@ plt.plot(
 )
 plt.plot(x, np.ones(len(x)) * 20.1719, '--')
 
-plt.legend(["DEI", "MOOSE"])
+plt.plot(x, np.ones(len(x)) * 48.9316, '--')
+
+plt.legend(["DEI", "MOOSE", "MOOSE (w/ EVBC)"])
 
 
 plt.xlabel(r"\text{Normalized hoop-direction distance}")

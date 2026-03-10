@@ -22,7 +22,16 @@ y_uphill = df["Uphill"]
 # ================================
 #  Read MOOSE CSV
 # ================================
-df_moose = pd.read_csv("axial_MOOSE.csv")
+df_moose = pd.read_csv("../weld_only_cooldown/axial_MOOSE.csv")
+
+df_moose.columns = df_moose.columns.str.strip()   # clean column names
+print("MOOSE columns:", df_moose.columns)
+
+x_moose_wo_EVBC = df_moose["y"]
+y_moose_wo_EVBC = df_moose["stress_yy"]
+
+
+df_moose =  pd.read_csv("axial_MOOSE.csv")
 
 df_moose.columns = df_moose.columns.str.strip()   # clean column names
 print("MOOSE columns:", df_moose.columns)
@@ -69,10 +78,19 @@ plt.plot(
 )
 
 plt.plot(
-    x_moose, y_moose,
-    color="black",
+    x_moose_wo_EVBC, y_moose_wo_EVBC,
+    '--',
+    color="#1f77b4",
     linewidth=1.8,
     label="MOOSE"
+)
+
+plt.plot(
+    x_moose, y_moose,
+    '--',
+    color="orange",
+    linewidth=1.8,
+    label="MOOSE (w/ EVBC)"
 )
 
 plt.xlabel(r"\text{y}")
