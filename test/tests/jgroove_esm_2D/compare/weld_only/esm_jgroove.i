@@ -151,6 +151,14 @@ TA = 293.15
                            max_principal_stress mid_principal_stress min_principal_stress
                            plastic_strain_xx plastic_strain_yy plastic_strain_zz
                            plastic_strain_xy plastic_strain_xz plastic_strain_yz"
+        material_output_order = "CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 FIRST FIRST FIRST
+                                 FIRST FIRST FIRST"
       []
     []
   []

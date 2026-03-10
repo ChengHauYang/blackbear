@@ -3,7 +3,7 @@ active_blocks = 'tube head clad butter weld'
 # Preheat temperature 60 F from paper
 # change it to be "k"
 # 315 C to k (grap from Table1 in Comparison of Welding Residual Stress Solutions for Control Rod Drive Mechanism Nozzles)
-T0 = 588.15
+# T0 = 588.15
 
 # ambient temperature
 TA = 293.15
@@ -99,6 +99,14 @@ TA = 293.15
                            max_principal_stress mid_principal_stress min_principal_stress
                            plastic_strain_xx plastic_strain_yy plastic_strain_zz
                            plastic_strain_xy plastic_strain_xz plastic_strain_yz"
+        material_output_order = "CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 CONSTANT CONSTANT CONSTANT
+                                 FIRST FIRST FIRST
+                                 FIRST FIRST FIRST"
       []
     []
   []
@@ -270,14 +278,14 @@ TA = 293.15
   #   type = ADComputeThermalExpansionEigenstrain
   #   temperature = T
   #   thermal_expansion_coeff = 1e-3
-  #   stress_free_temperature = ${T0}
+  #   stress_free_temperature = ${TA}
   #   eigenstrain_name = thermal_expansion
   # []
   # copy from Bipul
   [CTE]
     type = ADComputeInstantaneousThermalExpansionFunctionEigenstrain
     eigenstrain_name = thermal
-    stress_free_temperature = ${T0}
+    stress_free_temperature = ${TA}
     thermal_expansion_function = CTE_base
     temperature = T
     outputs = exodus

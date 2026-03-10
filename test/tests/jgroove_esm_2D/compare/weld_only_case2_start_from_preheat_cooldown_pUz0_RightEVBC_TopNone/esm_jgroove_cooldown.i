@@ -1,6 +1,4 @@
-all_blocks = 'tube head clad butter new weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-
-active_blocks = 'tube head clad butter new'
+active_blocks = 'tube head clad butter weld'
 
 # Preheat temperature 60 F from paper
 # change it to be "k"
@@ -12,26 +10,27 @@ TA = 293.15
 
 [GlobalParams]
   block = ${active_blocks}
-  displacements = 'disp_r disp_z'
+  displacements = 'disp_x disp_y'
 []
 
 [Problem]
   kernel_coverage_check = false
   material_coverage_check = false
+  restart_file_base = esm_jgroove_cp_cp/LATEST
 []
 
 [Mesh]
   [gmg]
     type = FileMeshGenerator
-    file = "jgroove_model01.exo"
+    file = esm_jgroove_cp_cp/LATEST
   []
 
   [ext]
     type = SideSetsAroundSubdomainGenerator
     include_only_external_sides = true # not consider internal
     input = 'gmg'
-    block = 'tube head clad butter'
-    new_boundary = 'moving_boundary'
+    block = ${active_blocks}
+    new_boundary = 'outer_boundary'
   []
 
   [fix_node]
@@ -43,12 +42,7 @@ TA = 293.15
   []
 
   coord_type = 'RZ'
-  # rz_coord_axis = y # axial coordinate = y, radial coordinate = x
-
-  add_subdomain_ids = '26'
-  add_subdomain_names = 'new'
-
-  add_sideset_names = 'tube_weld butter_weld'
+  rz_coord_axis = y # axial coordinate = y, radial coordinate = x
 
   use_displaced_mesh = false
 []
@@ -56,7 +50,6 @@ TA = 293.15
 [Variables]
   [T]
     order = FIRST
-    initial_condition = ${T0}
   []
 []
 
@@ -70,70 +63,14 @@ TA = 293.15
   [extrapolation_patch_disp_x]
     type = NodalPatchRecoveryVariable
     patch_polynomial_order = FIRST
-    variable = 'disp_r'
+    variable = 'disp_x'
     execute_on = 'TIMESTEP_BEGIN'
   []
   [extrapolation_patch_disp_y]
     type = NodalPatchRecoveryVariable
     patch_polynomial_order = FIRST
-    variable = 'disp_z'
+    variable = 'disp_y'
     execute_on = 'TIMESTEP_BEGIN'
-  []
-[]
-
-[MeshModifiers]
-  [cut_esm]
-    type = TimedSubdomainModifier
-    times = '3 6 9 12 15 18 21 24 27 30 33 36 39 42'
-    blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-    blocks_to = 'new new new new new new new new new new new new new new'
-    execute_on = 'TIMESTEP_BEGIN'
-
-    block = ${all_blocks}
-
-    # --- new for setting IC --- #
-
-    old_subdomain_reinitialized = false
-    reinitialize_subdomains = ${active_blocks}
-    reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
-    reinitialize_variables = "T disp_r disp_z"
-    polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
-
-    #
-    moving_boundaries = 'moving_boundary'
-    moving_boundary_subdomain_pairs = 'new weldpass02; new weldpass03; new weldpass04; new weldpass05; new weldpass06; new weldpass07; new weldpass08; new weldpass09; new weldpass10; new weldpass11; new weldpass12; new weldpass13; new weldpass14; new'
-    # moving_boundary_subdomain_pairs = 'tube head;tube butter ; butter head;head clad; tube weldpass01; tube weldpass03; tube weldpass05;tube weldpass07; tube weldpass09;  tube weldpass11; tube weldpass13; butter weldpass02; butter weldpass04; butter weldpass06; butter weldpass08; butter weldpass10; butter weldpass12; butter weldpass14'
-  []
-[]
-
-[UserObjects]
-  [tube_weld_update]
-    type = SidesetAroundSubdomainUpdater
-    inner_subdomains = tube
-    outer_subdomains = 'weldpass01 weldpass03 weldpass05 weldpass07 weldpass09 weldpass11 weldpass13'
-    assign_outer_surface_sides = false
-    update_sideset_name = tube_weld
-    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
-    execution_order_group = -1
-    block = ${all_blocks}
-  []
-  [butter_weld_update]
-    type = SidesetAroundSubdomainUpdater
-    inner_subdomains = butter
-    outer_subdomains = 'weldpass01 weldpass02 weldpass04 weldpass06 weldpass08 weldpass10 weldpass12 weldpass14'
-    assign_outer_surface_sides = false
-    update_sideset_name = butter_weld
-    execute_on = 'TIMESTEP_BEGIN TIMESTEP_END'
-    execution_order_group = -1
-    block = ${all_blocks}
-  []
-[]
-
-[SpatioTemporalPaths]
-  [path]
-    type = CSVPiecewiseLinearSpatioTemporalPath
-    file = 'weld_pass.csv'
-    verbose = true
   []
 []
 
@@ -170,7 +107,6 @@ TA = 293.15
                                  CONSTANT CONSTANT CONSTANT
                                  FIRST FIRST FIRST
                                  FIRST FIRST FIRST"
-
       []
     []
   []
@@ -228,7 +164,7 @@ TA = 293.15
     relative_tolerance = 1e-08 #default = 1e-05
     absolute_tolerance = 1e-11 # dfault = 1e-05
     perform_finite_strain_rotations = false
-    block = 'butter new'
+    block = 'butter weld'
   []
 
   [radial_return_stress_load_ss309]
@@ -319,7 +255,7 @@ TA = 293.15
     type = ADComputeVariableIsotropicElasticityTensor
     youngs_modulus = youngs_modulus_prop # MPa == N/mm^2
     poissons_ratio = poissons_ratio_prop
-    block = 'tube butter new'
+    block = 'tube butter weld'
   []
 
   [elasticity_sa508] # we got this at 315C
@@ -356,38 +292,6 @@ TA = 293.15
   []
   # end: expansion
 
-  # begin: heat source material
-  # how to set this properly??
-  # [volumetric_heat] # need to be exactly this name!
-  #   type = ADMovingEllipsoidalHeatSource
-  #   path = 'path'
-  #   power = 1000
-  #   efficiency = 1
-  #   scale = 1
-  #   a = 6
-  #   b = 2
-  #   outputs = exodus
-  # []
-  [volumetric_heat]
-    type = FunctionPathEllipsoidHeatSourceWeave
-    # average values from other paper
-    # unit is "mm"
-    rx = 2.075
-    ry = 2.075
-    rz = 2.075
-    power = 150 # W/mm # average values from other paper
-    # 2 pi R = 345.6 mm
-    # 4193.7/345.6 = 12.13 W/mm
-    # 1900/417 = 4.55
-    # 12.13 *4.55 =55.2
-    efficiency = 0.79 # average values from other paper
-    function_x = "radial_centroid"
-    function_y = "axis_centroid"
-    function_z = "z_centroid"
-    t_final = 42 # 14 weld passes
-  []
-  # end: heat source material
-
   # Base on paper: Comparison of Welding Residual Stress Solutions
   # for Control Rod Drive Mechanism Nozzles
   # isotropic hardening was assumed
@@ -417,7 +321,7 @@ TA = 293.15
     max_inelastic_increment = 0.0001
     relative_tolerance = 1e-08
     absolute_tolerance = 1e-11
-    block = 'butter new'
+    block = 'butter weld'
   []
   [isoplasticity_ss309]
     type = ADIsotropicPlasticityStressUpdate
@@ -514,10 +418,14 @@ TA = 293.15
     specific_heat = specific_heat
     variable = T
   []
-  [hsource]
-    type = ADMatHeatSource
-    material_property = 'volumetric_heat'
-    variable = T
+[]
+
+[Constraints]
+  [x1]
+    type = EqualValueBoundaryConstraint
+    variable = disp_x
+    secondary = 'vessel_od' # boundary
+    penalty = 1e6
   []
 []
 
@@ -526,18 +434,10 @@ TA = 293.15
   [convective_surface] # Convective Start
     type = ADConvectiveHeatFluxBC # Convective flux, e.g. q'' = h*(Tw - Tf)
     variable = T
-    boundary = 'tube_weld butter_weld moving_boundary' # BC applied on every interfaces
+    boundary = 'outer_boundary' # BC applied on every interfaces
     T_infinity = ${TA} # ambient temperature (K)
     heat_transfer_coefficient = 0.00001 # I copied it from Bipul # h = convective heat transfer coefficient (w/mm^2-K)
   [] # Convective End
-
-  # [conv]
-  #   type = ADConvectiveHeatFluxBC
-  #   variable = T
-  #   boundary = 'tube_weld butter_weld moving_boundary'
-  #   T_infinity = ${T0}
-  #   heat_transfer_coefficient = ${heat_transfer_coefficient}
-  # []
 
   # DEI settings
   # we set as 60F instead
@@ -553,17 +453,17 @@ TA = 293.15
 
   [anchor_y]
     type = DirichletBC
-    variable = disp_z
-    boundary = 'vessel_top fix_disp'
+    variable = disp_y
+    boundary = 'fix_disp'
     value = 0.0
   []
 
-  [anchor_x]
-    type = DirichletBC
-    variable = 'disp_r'
-    boundary = fix_disp
-    value = 0.0
-  []
+  # [anchor_x]
+  #   type = DirichletBC
+  #   variable = 'disp_x'
+  #   boundary = fix_disp
+  #   value = 0.0
+  # []
 []
 
 [Executioner]
@@ -574,17 +474,13 @@ TA = 293.15
   nl_max_its = 100
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
-  dt = 0.3
-  end_time = 45
+  dt = 1000
+  # end_time = 1000000
+  end_time = 100000
   automatic_scaling = true
 []
 
 [Outputs]
   exodus = true
-  time_step_interval = 2
-  [cp]
-    type = Checkpoint
-    time_step_interval = 50
-    num_files = 3
-  []
+  time_step_interval = 20
 []

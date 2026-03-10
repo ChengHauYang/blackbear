@@ -1,29 +1,30 @@
-all_blocks = 'tube head clad butter new weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
+all_blocks = 'tube head clad butter weld weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
 
-active_blocks = 'tube head clad butter new'
+active_blocks = 'tube head clad butter weld'
 
 # Preheat temperature 60 F from paper
 # change it to be "k"
 # 315 C to k (grap from Table1 in Comparison of Welding Residual Stress Solutions for Control Rod Drive Mechanism Nozzles)
-T0 = 588.15
+# T0 = 588.15
 
 # ambient temperature
 TA = 293.15
 
 [GlobalParams]
   block = ${active_blocks}
-  displacements = 'disp_r disp_z'
+  displacements = 'disp_x disp_y'
 []
 
 [Problem]
   kernel_coverage_check = false
   material_coverage_check = false
+  restart_file_base = esm_jgroove_preheat_cp_cp/LATEST
 []
 
 [Mesh]
   [gmg]
     type = FileMeshGenerator
-    file = "jgroove_model01.exo"
+    file = esm_jgroove_preheat_cp_cp/LATEST
   []
 
   [ext]
@@ -43,10 +44,10 @@ TA = 293.15
   []
 
   coord_type = 'RZ'
-  # rz_coord_axis = y # axial coordinate = y, radial coordinate = x
+  rz_coord_axis = y # axial coordinate = y, radial coordinate = x
 
   add_subdomain_ids = '26'
-  add_subdomain_names = 'new'
+  add_subdomain_names = 'weld'
 
   add_sideset_names = 'tube_weld butter_weld'
 
@@ -56,7 +57,6 @@ TA = 293.15
 [Variables]
   [T]
     order = FIRST
-    initial_condition = ${T0}
   []
 []
 
@@ -70,13 +70,13 @@ TA = 293.15
   [extrapolation_patch_disp_x]
     type = NodalPatchRecoveryVariable
     patch_polynomial_order = FIRST
-    variable = 'disp_r'
+    variable = 'disp_x'
     execute_on = 'TIMESTEP_BEGIN'
   []
   [extrapolation_patch_disp_y]
     type = NodalPatchRecoveryVariable
     patch_polynomial_order = FIRST
-    variable = 'disp_z'
+    variable = 'disp_y'
     execute_on = 'TIMESTEP_BEGIN'
   []
 []
@@ -86,7 +86,7 @@ TA = 293.15
     type = TimedSubdomainModifier
     times = '3 6 9 12 15 18 21 24 27 30 33 36 39 42'
     blocks_from = 'weldpass01 weldpass02 weldpass03 weldpass04 weldpass05 weldpass06 weldpass07 weldpass08 weldpass09 weldpass10 weldpass11 weldpass12 weldpass13 weldpass14'
-    blocks_to = 'new new new new new new new new new new new new new new'
+    blocks_to = 'weld weld weld weld weld weld weld weld weld weld weld weld weld weld'
     execute_on = 'TIMESTEP_BEGIN'
 
     block = ${all_blocks}
@@ -96,12 +96,12 @@ TA = 293.15
     old_subdomain_reinitialized = false
     reinitialize_subdomains = ${active_blocks}
     reinitialization_strategy = "POLYNOMIAL_NEIGHBOR"
-    reinitialize_variables = "T disp_r disp_z"
+    reinitialize_variables = "T disp_x disp_y"
     polynomial_fitters = 'extrapolation_patch_T extrapolation_patch_disp_x extrapolation_patch_disp_y'
 
     #
     moving_boundaries = 'moving_boundary'
-    moving_boundary_subdomain_pairs = 'new weldpass02; new weldpass03; new weldpass04; new weldpass05; new weldpass06; new weldpass07; new weldpass08; new weldpass09; new weldpass10; new weldpass11; new weldpass12; new weldpass13; new weldpass14; new'
+    moving_boundary_subdomain_pairs = 'weld weldpass02; weld weldpass03; weld weldpass04; weld weldpass05; weld weldpass06; weld weldpass07; weld weldpass08; weld weldpass09; weld weldpass10; weld weldpass11; weld weldpass12; weld weldpass13; weld weldpass14; weld'
     # moving_boundary_subdomain_pairs = 'tube head;tube butter ; butter head;head clad; tube weldpass01; tube weldpass03; tube weldpass05;tube weldpass07; tube weldpass09;  tube weldpass11; tube weldpass13; butter weldpass02; butter weldpass04; butter weldpass06; butter weldpass08; butter weldpass10; butter weldpass12; butter weldpass14'
   []
 []
@@ -129,14 +129,6 @@ TA = 293.15
   []
 []
 
-[SpatioTemporalPaths]
-  [path]
-    type = CSVPiecewiseLinearSpatioTemporalPath
-    file = 'weld_pass.csv'
-    verbose = true
-  []
-[]
-
 [Physics]
 
   [SolidMechanics]
@@ -151,9 +143,6 @@ TA = 293.15
         eigenstrain_names = 'thermal'
         temperature = T
 
-        # generate_output = "stress_xx stress_yy stress_zz
-        #                    stress_xy stress_xz stress_yz
-        #                    vonmises_stress"
         generate_output = "stress_xx stress_yy stress_zz
                            stress_xy stress_xz stress_yz
                            vonmises_stress
@@ -170,7 +159,6 @@ TA = 293.15
                                  CONSTANT CONSTANT CONSTANT
                                  FIRST FIRST FIRST
                                  FIRST FIRST FIRST"
-
       []
     []
   []
@@ -228,7 +216,7 @@ TA = 293.15
     relative_tolerance = 1e-08 #default = 1e-05
     absolute_tolerance = 1e-11 # dfault = 1e-05
     perform_finite_strain_rotations = false
-    block = 'butter new'
+    block = 'butter weld'
   []
 
   [radial_return_stress_load_ss309]
@@ -319,7 +307,7 @@ TA = 293.15
     type = ADComputeVariableIsotropicElasticityTensor
     youngs_modulus = youngs_modulus_prop # MPa == N/mm^2
     poissons_ratio = poissons_ratio_prop
-    block = 'tube butter new'
+    block = 'tube butter weld'
   []
 
   [elasticity_sa508] # we got this at 315C
@@ -342,14 +330,14 @@ TA = 293.15
   #   type = ADComputeThermalExpansionEigenstrain
   #   temperature = T
   #   thermal_expansion_coeff = 1e-3
-  #   stress_free_temperature = ${T0}
+  #   stress_free_temperature = ${TA}
   #   eigenstrain_name = thermal_expansion
   # []
   # copy from Bipul
   [CTE]
     type = ADComputeInstantaneousThermalExpansionFunctionEigenstrain
     eigenstrain_name = thermal
-    stress_free_temperature = ${T0}
+    stress_free_temperature = ${TA}
     thermal_expansion_function = CTE_base
     temperature = T
     outputs = exodus
@@ -417,7 +405,7 @@ TA = 293.15
     max_inelastic_increment = 0.0001
     relative_tolerance = 1e-08
     absolute_tolerance = 1e-11
-    block = 'butter new'
+    block = 'butter weld'
   []
   [isoplasticity_ss309]
     type = ADIsotropicPlasticityStressUpdate
@@ -521,6 +509,15 @@ TA = 293.15
   []
 []
 
+[Constraints]
+  [x1]
+    type = EqualValueBoundaryConstraint
+    variable = disp_x
+    secondary = 'vessel_od' # boundary
+    penalty = 1e6
+  []
+[]
+
 [BCs]
 
   [convective_surface] # Convective Start
@@ -530,14 +527,6 @@ TA = 293.15
     T_infinity = ${TA} # ambient temperature (K)
     heat_transfer_coefficient = 0.00001 # I copied it from Bipul # h = convective heat transfer coefficient (w/mm^2-K)
   [] # Convective End
-
-  # [conv]
-  #   type = ADConvectiveHeatFluxBC
-  #   variable = T
-  #   boundary = 'tube_weld butter_weld moving_boundary'
-  #   T_infinity = ${T0}
-  #   heat_transfer_coefficient = ${heat_transfer_coefficient}
-  # []
 
   # DEI settings
   # we set as 60F instead
@@ -553,17 +542,17 @@ TA = 293.15
 
   [anchor_y]
     type = DirichletBC
-    variable = disp_z
-    boundary = 'vessel_top fix_disp'
+    variable = disp_y
+    boundary = 'fix_disp'
     value = 0.0
   []
 
-  [anchor_x]
-    type = DirichletBC
-    variable = 'disp_r'
-    boundary = fix_disp
-    value = 0.0
-  []
+  # [anchor_x]
+  #   type = DirichletBC
+  #   variable = 'disp_x'
+  #   boundary = fix_disp
+  #   value = 0.0
+  # []
 []
 
 [Executioner]
