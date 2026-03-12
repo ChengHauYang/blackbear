@@ -29,7 +29,6 @@
     block = ${base_blocks}
   []
   [T]
-    initial_condition = ${T0}
     block = ${base_blocks}
   []
 []
@@ -73,7 +72,6 @@
   [tbegin]
     order = CONSTANT
     family = MONOMIAL
-    initial_condition = 1e12
   []
 []
 
