@@ -155,12 +155,14 @@
     density_name = density
     specific_heat = specific_heat
     block = ${base_blocks}
+    use_displaced_mesh = false
   []
   [hcond]
     type = ADHeatConduction
     variable = T
     thermal_conductivity = thermal_conductivity
     block = ${base_blocks}
+    use_displaced_mesh = false
   []
 []
 
