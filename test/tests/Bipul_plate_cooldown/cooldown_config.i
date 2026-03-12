@@ -17,7 +17,7 @@ total_weld_time = '${fparse pass_weld_time*total_passes + delay_time}'
 load_release_time = 0 #360 # Release the top BCs slowly...
 end_of_cooldown = 100000# 720000 # 360000 if pwht is used; 720000 if pwht is not used
 
-dt = 1000
+dt = 100
 dtmax = 5000 #3600
 dtmin = 0.01 #1e-8
 sync_times = '${total_weld_time} ${fparse total_weld_time+dt} ${fparse (end_of_cooldown+load_release_time)} ${fparse end_of_cooldown/2} ${end_of_cooldown}'
