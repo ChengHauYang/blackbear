@@ -14,7 +14,7 @@
 [Mesh]
   [fmg]
     type = FileMeshGenerator
-    file = esm_jgroove_cp_cp/LATEST
+    file = weld_cp/LATEST
   []
 []
 
