@@ -1,5 +1,5 @@
 thickness = 'quarterinch_real_adtl_constraint' #'quarterinch_real_adtl' #'quarterinch_real' #'quarterinch_unreal'
-mesh_file = 'quarterinch_real_adtl_constraint.exo' #'quarterinch_real.exo' #'quarterinch_unreal.exo'
+#mesh_file = 'quarterinch_real_adtl_constraint.exo' #'quarterinch_real.exo' #'quarterinch_unreal.exo'
 exo_file_base = '${thickness}/out'
 csv_file_base = '${thickness}/scl'
 base_blocks = 'base weld_to_base'
