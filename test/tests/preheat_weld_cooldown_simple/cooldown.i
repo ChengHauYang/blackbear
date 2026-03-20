@@ -10,13 +10,27 @@ TA = 293.15
     type = FileMeshGenerator
     file = weld_cp_cp/0010
   []
-
   use_displaced_mesh = false
 []
 
 [Variables]
   [T]
     order = FIRST
+  []
+[]
+
+[AuxVariables]
+  [thermal_strain_xx]
+    family = MONOMIAL
+    order = CONSTANT
+  []
+  [thermal_strain_yy]
+    family = MONOMIAL
+    order = CONSTANT
+  []
+  [thermal_strain_zz]
+    family = MONOMIAL
+    order = CONSTANT
   []
 []
 
@@ -34,7 +48,6 @@ TA = 293.15
   []
 []
 
-
 [Functions]
   [CTE_base]
     type = PiecewiseLinear
@@ -42,25 +55,22 @@ TA = 293.15
     y = '10.9e-6 16.4e-6'
   []
 
-  [radial_centroid] # x
+  [radial_centroid]
     type = PiecewiseLinear
     x = '1 10'
     y = '0.5 1.5'
   []
 
-  [axis_centroid] # y
+  [axis_centroid]
     type = ConstantFunction
     value = 0.75
   []
-
 
   [z_centroid]
     type = ConstantFunction
     value = 0.0
   []
-
 []
-
 
 [UserObjects]
   [extrapolation_patch_T]
@@ -100,20 +110,17 @@ TA = 293.15
                            vonmises_stress
                            mechanical_strain_xx mechanical_strain_yy mechanical_strain_zz
                            mechanical_strain_xy mechanical_strain_xz mechanical_strain_yz
-                           max_principal_stress mid_principal_stress min_principal_stress
-                           "
+                           max_principal_stress mid_principal_stress min_principal_stress"
         material_output_order = "CONSTANT CONSTANT CONSTANT
                                  CONSTANT CONSTANT CONSTANT
                                  CONSTANT
                                  CONSTANT CONSTANT CONSTANT
                                  CONSTANT CONSTANT CONSTANT
-                                 CONSTANT CONSTANT CONSTANT
-                                 "
+                                 CONSTANT CONSTANT CONSTANT"
       []
     []
   []
 []
-
 
 [Materials]
   [elastic_stress]
@@ -147,7 +154,31 @@ TA = 293.15
   [specific_heat]
     type = ADGenericConstantMaterial
     prop_names = 'specific_heat'
-    prop_values = ' 352.0'
+    prop_values = '352.0'
+  []
+[]
+
+[AuxKernels]
+  [th_xx]
+    type = ADMaterialRankTwoTensorAux
+    property = thermal
+    variable = thermal_strain_xx
+    i = 0
+    j = 0
+  []
+  [th_yy]
+    type = ADMaterialRankTwoTensorAux
+    property = thermal
+    variable = thermal_strain_yy
+    i = 1
+    j = 1
+  []
+  [th_zz]
+    type = ADMaterialRankTwoTensorAux
+    property = thermal
+    variable = thermal_strain_zz
+    i = 2
+    j = 2
   []
 []
 
@@ -165,21 +196,20 @@ TA = 293.15
     value = 0.0
   []
 
- [T_zero]
+  [T_zero]
     type = DirichletBC
     variable = T
     boundary = 'left'
     value = ${TA}
   []
 
-  [convective_surface] # Convective Start
+  [convective_surface]
     type = ADConvectiveHeatFluxBC
     variable = T
     boundary = 'right top bottom'
     T_infinity = ${TA}
     heat_transfer_coefficient = 0.00001
   []
-
 []
 
 [Executioner]
@@ -192,7 +222,6 @@ TA = 293.15
   end_time = 5000
   nl_abs_tol = 1e-8
   nl_rel_tol = 1e-8
-
   residual_and_jacobian_together = true
 []
 
@@ -205,4 +234,9 @@ TA = 293.15
 
 [Outputs]
   exodus = true
+  [handoff]
+    type = XDA
+    execute_on = 'FINAL'
+    file_base = 'cooldown_handoff'
+  []
 []
