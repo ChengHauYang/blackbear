@@ -59,6 +59,16 @@
     family = LAGRANGE
     order = FIRST
   []
+
+  [diff_disp_error_x]
+    family = LAGRANGE
+    order = FIRST
+  []
+  [diff_disp_error_y]
+    family = LAGRANGE
+    order = FIRST
+  []
+
 []
 
 [AuxKernels]
@@ -89,6 +99,21 @@
     coupled_variables = 'disp_aux_y disp_y'
     expression = 'abs(disp_aux_y - disp_y)'
   []
+
+  [diff_disp_error_x]
+    type = ParsedAux
+    variable = diff_disp_error_x
+    coupled_variables = 'disp_aux_x disp_x'
+    expression = 'abs(disp_aux_x - disp_x)/abs(disp_aux_x)'
+  []
+
+  [diff_disp_error_y]
+    type = ParsedAux
+    variable = diff_disp_error_y
+    coupled_variables = 'disp_aux_y disp_y'
+    expression = 'abs(disp_aux_y - disp_y)/abs(disp_aux_y)'
+  []
+
 []
 
 [Functions]
